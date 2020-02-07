@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from validate_email import validate_email
 import re
-
+import requests
+from django.conf import settings
 
 @api_view(['POST'])
 def register(request):
@@ -12,6 +13,7 @@ def register(request):
     username = request.POST.get('username', '')
     password = request.POST.get('password', '')
     lname = request.POST.get('lname', '')
+    captchaToken = request.POST.get('captchaToken', '')
 
     if not email or not username or not password or not lname:
         return Response('Please complete correctly the register form !', status=status.HTTP_400_BAD_REQUEST)
@@ -24,6 +26,14 @@ def register(request):
 
     if len(password) < 8 and re.search('[0-9]', password) is None and re.search('[A-Z]', password) is None:
         return Response('Your password must contain at least one capital letter, one number and must be at least 8 characters long.', status=status.HTTP_400_BAD_REQUEST)
+
+    r = requests.post(settings.GR_CAPTCHA_URL, {
+        'secret': settings.GR_CAPTCHA_SECRET_KEY,
+        'response': captchaToken
+    })
+
+    if not r.json()['success']:
+        return Response('Please complete correctly the captcha !', status=status.HTTP_400_BAD_REQUEST)
 
     user = User.objects.create_user(username, email, password)
     user.first_name = username
