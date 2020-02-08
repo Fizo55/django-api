@@ -35,8 +35,16 @@ def register(request):
     if not r.json()['success']:
         return Response('Please complete correctly the captcha !', status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.create_user(username, email, password)
-    user.first_name = username
-    user.last_name = lname
-    user.save()
-    return Response('Account successfully created', status=status.HTTP_200_OK)
+    try:
+        User.objects.get(email=email)
+        return Response('This username is already used', status=status.HTTP_400_BAD_REQUEST)
+    except User.DoesNotExist:
+        try:
+            User.objects.get(username=username)
+            return Response('This email is already used', status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            user = User.objects.create_user(username, email, password)
+            user.first_name = username
+            user.last_name = lname
+            user.save()
+            return Response('Account successfully created', status=status.HTTP_200_OK)
