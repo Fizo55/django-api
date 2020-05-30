@@ -22,9 +22,9 @@ def register(request):
         return Response('Please check if your email address is good', status=status.HTTP_400_BAD_REQUEST)
 
     if len(username) < 3:
-        return Response('Your username need to have more than 2 letters', status=status.HTTP_400_BAD_REQUEST)
+        return Response('Your username need to have more than 3 letters', status=status.HTTP_400_BAD_REQUEST)
 
-    if len(password) < 8 and re.search('[0-9]', password) is None and re.search('[A-Z]', password) is None:
+    if len(password) <= 8 and re.search('[0-9]', password) is None and re.search('[A-Z]', password) is None:
         return Response('Your password must contain at least one capital letter, one number and must be at least 8 characters long.', status=status.HTTP_400_BAD_REQUEST)
 
     r = requests.post(settings.GR_CAPTCHA_URL, {
@@ -37,11 +37,11 @@ def register(request):
 
     try:
         User.objects.get(email=email)
-        return Response('This username is already used', status=status.HTTP_400_BAD_REQUEST)
+        return Response('This email is already used', status=status.HTTP_400_BAD_REQUEST)
     except User.DoesNotExist:
         try:
             User.objects.get(username=username)
-            return Response('This email is already used', status=status.HTTP_400_BAD_REQUEST)
+            return Response('This username is already used', status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
             user = User.objects.create_user(username, email, password)
             user.first_name = username
